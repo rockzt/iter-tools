@@ -33,9 +33,6 @@ def shuffle_deck(deck):
 
 shuffled_deck  = shuffle_deck(deck_of_cards_itertools)
 
-print_shuffle_deck = deepcopy(shuffled_deck)
-print('Printing shuffled deck of cards:')
-print(list(print_shuffle_deck))
 
 # Now let's say you want to allow your users to cut the deck at a specific position - NO THE BEST OPTION
 def cut(deck, position):
@@ -68,25 +65,47 @@ print(list(iterator2))
 # You can optionally include a step argument as well.
 # The biggest difference here is that slice returns an iterator instead of a list
 list_sliced = it.islice('ABCDEFG', 2, 5)
-print(list(list_sliced))
+
 
 # slice from beginning to position 4, in steps of 2
 list_sliced = it.islice([1,2,3,4,5,6,7,8,9], 0, 5, 2)
-print(list(list_sliced))
 
 # Slice from beginning to index 3
 list_sliced = it.islice('ABCDEFG', 4)
-print(list(list_sliced))
+
+
 
 # itertools.chain this function takes any number of iterables as arguments and "chains" them together
 list_chained = it.chain('ABCDEFG',[1,2,3,4,5])
-print(list(list_chained))
-
-
-# Now you can reimplement the cut function using iterttols
 
 
 
-
+# Now you can reimplement the cut function using iterttols using itertools.islice, itertools.tee and itertools.chain
 def itertools_cut(deck, position):
-    pass
+    deck1 , deck2 = it.tee(deck, 2)
+    top = it.islice(deck1, position)
+    bottom = it.islice(deck2, position, None)
+    return it.chain(bottom, top)
+
+#Creating a new deck of cards using itertools.product
+deck_of_cards_itertools = it.product(ranks, suits)
+
+cards_itertools_curt = itertools_cut(deck_of_cards_itertools, 10)
+#print('Printing cut deck of cards at position 10 using itertools:')
+#print(list(cards_itertools_curt))
+
+
+#Now as the final step let's deal cards from the deck
+def deal(deck, number_of_hands, cards_per_hand):
+    """Return a tuples of hands dealt from the deck."""
+    iters = [iter(deck)] * cards_per_hand
+    return tuple(zip(*(tuple(it.islice(itr, number_of_hands)) for itr in iters)))
+
+
+hand_1, hand_2, hand_3 = deal(cards_itertools_curt, 3, 7)
+print('Dealt hands:')
+print('Hand 1:', hand_1)
+print('Hand 2:', hand_2)
+print('Hand 3:', hand_3)
+
+print('Length of the deck after dealing hands:', len(list(cards_itertools_curt)))  # Should be 52 - (3*7) = 31
