@@ -26,3 +26,20 @@ print(output_flatten_list_cycle)
 # - Streaming repeated patterns without loading them into memory
 
 # Hands on real world example
+# Each API key has multiple headers (iterables inside an iterable)
+api_key_batches = [
+    {"Authorization": "Bearer KEY_1", "Client": "A"},
+    {"Authorization": "Bearer KEY_2", "Client": "B"},
+    {"Authorization": "Bearer KEY_3", "Client": "C"},
+]
+
+# Create an infinite flattened stream of headers
+api_headers_cycle = it.chain.from_iterable(
+    it.repeat(api_key_batches)
+)
+
+# Simulate making 10 API calls
+batch = zip(range(10), api_headers_cycle)
+
+for i, headers in batch :
+    print(f"Request {i+1} → Using headers: {headers}")
