@@ -43,3 +43,122 @@ batch = zip(range(10), api_headers_cycle)
 
 for i, headers in batch :
     print(f"Request {i+1} → Using headers: {headers}")
+
+# Applying itertools to real world example
+# Analysing the S&P 500
+
+from collections import namedtuple
+
+class DataPoint(namedtuple('DataPoint', ['date','value'])):
+    __slots__ = ()
+
+    def __le__(self, other):
+        return self.value <= other.value
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+    def __gt__(self, other):
+        return self.value > other.value
+
+import csv
+from datetime import datetime
+def read_prices(csvfile, _strptime=datetime.strptime):
+    counter = 1
+    with open(csvfile) as infile:
+        reader = csv.DictReader(infile)
+        for row in reader:
+            yield DataPoint(date=_strptime(row['Date'], '%Y-%m-%d').date(), value= float(row['Adj Close']))
+
+# Read prices and calculate daily percent change
+prices = tuple(read_prices('csv/SP500.csv'))
+gains = tuple(
+    DataPoint(day.date, 100*(day.value/prev_day.value - 1.))
+    for day, prev_day in zip(prices[1:], prices)
+    )
+
+# Determine Maximum Gain and Loss
+'''
+max_gain = DataPoint(None, 0)
+print(max_gain)
+
+for data_point in gains:
+    max_gain = max(data_point, max_gain)
+'''
+
+
+# Alternative way to determine Maximum Gain and Loss using itertools.filterfalse() adn reduce together
+# Even if there are never gains, you can handle this error by simple adding
+# The reduce() function accepts an optional third argument for an initial value. Passing 0 to this third argument gets you the expected behavior
+import functools as ft
+# Find maximum daily gain/loss
+zdp = DataPoint(None, 0)
+max_gain = ft.reduce(max, it.filterfalse(lambda p: p <= zdp, gains))
+max_loss = ft.reduce(min, it.filterfalse(lambda p: p > zdp, gains), zdp)
+
+# Longest growth streak
+# Using the itertools.takewhile() and itertools.dropwhile() functions
+# it.takewhile(): takes a predicate and an iterable inputs as arguments and returns an ioterator over
+# inputs that stops at the first instance of an element for which the predicate return False
+# While the dropwhile() function does exactly the opposite. It returns an iterator beginning at the first
+# element for which the predicate returns false
+
+def consecutive_positives(sequence, zero=0):
+    pass
+
+
+
+
+
+
+
+
+
+
+             # Exercise named tuple
+'''
+# Declaring namedtuple (first argment is the name of the new class and the second argument list of fields)
+Student = namedtuple('Student' , ['name','age','DOB'])
+# Adding values
+new_values = Student('Rito','19','19178123')
+# Accessing values by index
+print(new_values[1])
+# Accessing values by name
+print(new_values.name)
+# Accessing by getattr()
+attribute_accessed = getattr(new_values, 'name')
+print(attribute_accessed)
+#---------------------------------------------------
+    # Conversion Operations
+# Using _make() return a namedtuple() from the iterable passed as argument
+Student = namedtuple('Employee', ['nickname','code','speciality'])
+S = Student('Rock','1517','recon')
+print(S.nickname)
+li = ['Nana','1983','None']
+S1 = Student._make(li)
+print(S1.nickname)
+
+# Using _asdict() as constructed from the mapped values of namedtuple()
+Student = namedtuple('Member',['name','age','range'])
+S1 = Student('rockdrick','29','2')
+print(S1.name)
+S1_dict = S1._asdict()
+print(S1_dict.get('name'))
+
+# Using ** operator to convert a dictionary into the namedtuple().
+Member = namedtuple('Member', ['name','age','code'])
+
+M1 = Member('Momo','16','123457')
+print(M1)
+M2 = Member('Rito', '15', '13123')
+print(M2)
+
+#Creating a dictionary to be converted into the namedtuple
+decoy_dict = {
+    "name":"Yami",
+    "age":"17",
+    "code":"xxxxx"
+}
+print("Converting dict into namedtuple")
+print(Member(**decoy_dict))
+'''
