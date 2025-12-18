@@ -1,4 +1,5 @@
 import itertools as it
+from itertools import takewhile
 
 # Creating flattening providing a single iterable as an argument
 output_flatten_list = list(it.chain.from_iterable([[1,2,3,4,5],[6,7,8,9,10]]))
@@ -39,11 +40,12 @@ api_headers_cycle = it.chain.from_iterable(
 )
 
 # Simulate making 10 API calls
-batch = zip(range(10), api_headers_cycle)
+#batch = zip(range(10), api_headers_cycle)
 
+'''
 for i, headers in batch :
     print(f"Request {i+1} → Using headers: {headers}")
-
+'''
 # Applying itertools to real world example
 # Analysing the S&P 500
 
@@ -93,8 +95,26 @@ for data_point in gains:
 import functools as ft
 # Find maximum daily gain/loss
 zdp = DataPoint(None, 0)
-max_gain = ft.reduce(max, it.filterfalse(lambda p: p <= zdp, gains))
-max_loss = ft.reduce(min, it.filterfalse(lambda p: p > zdp, gains), zdp)
+#In this part you are telling it.filterfalse to remove those values that are equals or lower than Zero
+'''
+Compared to the example provided after the one down below, when calculating the gains, you do not have
+to provide the zdp variable as an initializer due you are assuming there is at least one positive gain, 
+if not, an exception is acceptable (or expected)
+'''
+max_gain = ft.reduce(
+    max,
+    it.filterfalse(lambda p: p <= zdp, gains)
+)
+
+
+# In this part you are telling it.filterfalse to remove those values that are greater than Zero.
+# Inside the function reduce, we are adding an already declared empty variable that works as an initializer
+# In this if the first value is empty the will not throw an error due the initializer provided
+max_loss = ft.reduce(
+    min,
+    it.filterfalse(lambda p: p > zdp, gains), zdp
+)
+
 
 # Longest growth streak
 # Using the itertools.takewhile() and itertools.dropwhile() functions
@@ -103,10 +123,31 @@ max_loss = ft.reduce(min, it.filterfalse(lambda p: p > zdp, gains), zdp)
 # While the dropwhile() function does exactly the opposite. It returns an iterator beginning at the first
 # element for which the predicate returns false
 
+'''Examples Using it.takewhile()'''
+#less_than = it.takewhile(lambda x: x < 3, [0,1,2,3,4])
+#less_than = [value for value in less_than]
+#print(less_than)
+
+'''Examples Using it.dropwhile()'''
+#greater_than = it.dropwhile(lambda x: x < 3, [0,1,2,3,4])
+#greater_than = [value for value in greater_than]
+#print(greater_than)
+
 def consecutive_positives(sequence, zero=0):
-    pass
+    def _consecutives():
+        for itr in it.repeat(iter(sequence)):
+            yield tuple(it.takewhile(lambda p: p > zero,
+                                     it.dropwhile(lambda p: p <= zero, itr)))
+    return it.takewhile(lambda t: len(t), _consecutives())
+
+# The function called returns an iterator with consecutive positive data points in gains
+growth_streaks = consecutive_positives(gains, zero=DataPoint(None, 0))
 
 
+# Now you can use reduce() to extrac the longest growth streak
+longest_growth_streak = ft.reduce(lambda x, y: x if len(x) > len(y) else y, growth_streaks)
+
+print(longest_growth_streak)
 
 
 
