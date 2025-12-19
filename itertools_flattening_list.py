@@ -151,6 +151,65 @@ print(longest_growth_streak)
 
 
 
+# BUILDING  RELAY TEAMS FROM SWIMMER DATA
+
+# Creating subclass event of the namedtuple object
+class Event(namedtuple('Event',['stroke','name','time'])):
+    __slots__ = ()
+    # This dunder method will allow min to be called on a sequence of Event object
+    def __lt__(self, other):
+        return self.time < other.time
+
+
+# Read the data from the csv into tuple of Event objects use the csv.DictReader object
+import statistics
+import datetime
+
+def read_event(csv_file, _strptime=datetime.datetime.strptime):
+    def _median(times):
+        # We need to convert the datetime provided due csv gives it a string value type
+        # Iterating through the list given an returning the median on a tuple
+        return statistics.median((_strptime(time, '%M:%S:%f').time()
+                                  for time in times))
+
+    fieldnames = ['Event','Name','Stroke']
+
+    # Reading CSV file
+    with open(csv_file) as infile:
+        # fieldnames overwriting the original field names
+        # restkey gather together the remaining columns and place them in a single column as a list and gives it the name you specify on restkey='Times'
+        reader = csv.DictReader(infile, fieldnames=fieldnames, restkey='Times')
+        # Skipping header
+        next(reader)
+        for row in reader:
+            yield Event(row['Stroke'],row['Name'],_median(row['Times']))
+
+
+events = tuple(read_event('csv/swimmers.csv'))
+
+# To group the events by stroke let us use itertools.groupby() which makes grouping objects in an iterabl and snap.
+# Basically it takes an iterable inputs and a key to group by, and returns an object containing iterators over the element of inputs grouped by the key
+# The object returned by groupby() is sort of like a dictionary but, unlike dictionary, it won't allow you to access its values by key name
+# In fact groupby() returns an iterator over tuples whose first components are keys and second components are iterators over the grouped data
+'''
+IMPORTANT: One thing to keep in mind with groupby() is that it is not as smart as you might like.
+As groupby() traverses the data, it aggregates elements until an element with a different key is encountered, at which point it starts a new group:
+Compare this to, say, the SQL GROUP BY command, which groups elements regardless of their order of appearance
+
+Therefore, you need to sort your data on the same key that you would like to group by, otherwise you might get unexpected results
+'''
+
+# Creating sorting and grouping functionality
+def sort_and_group(iterable, key=None):
+    """Group sorted 'iterable' on 'key'"""
+    return it.groupby(sorted(iterable, key=key),key=key)
+
+
+for stroke, evts in sort_and_group(events, key= lambda evt: evt.stroke):
+    events_by_name = sort_and_group(evts, key=lambda evt: evt.name)
+    best_times = (min(evt) for _, evt in events_by_name)
+    print(f'------------{stroke}------------')
+    print(list(best_times))
 
 
 
