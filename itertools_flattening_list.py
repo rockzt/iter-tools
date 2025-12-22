@@ -1,6 +1,7 @@
 import itertools as it
 from itertools import takewhile
 
+
 # Creating flattening providing a single iterable as an argument
 output_flatten_list = list(it.chain.from_iterable([[1,2,3,4,5],[6,7,8,9,10]]))
 print(output_flatten_list)
@@ -168,7 +169,7 @@ import datetime
 def read_event(csv_file, _strptime=datetime.datetime.strptime):
     def _median(times):
         # We need to convert the datetime provided due csv gives it a string value type
-        # Iterating through the list given an returning the median on a tuple
+        # Iterating through the list given a returning the median on a tuple
         return statistics.median((_strptime(time, '%M:%S:%f').time()
                                   for time in times))
 
@@ -204,13 +205,22 @@ def sort_and_group(iterable, key=None):
     """Group sorted 'iterable' on 'key'"""
     return it.groupby(sorted(iterable, key=key),key=key)
 
+# External function to group elements
+def grouper(inputs, n, fillvalue=None):
+    iters = [iter(inputs)] * n
+    return it.zip_longest(*iters, fillvalue=fillvalue)
 
-for stroke, evts in sort_and_group(events, key= lambda evt: evt.stroke):
+for stroke, evts in sort_and_group(events, key=lambda evt: evt.stroke):
     events_by_name = sort_and_group(evts, key=lambda evt: evt.name)
     best_times = (min(evt) for _, evt in events_by_name)
-    print(f'------------{stroke}------------')
-    print(list(best_times))
-
+    sorted_by_time = sorted(best_times, key=lambda evt: evt.time)
+    teams = zip(('A', 'B'), it.islice(grouper(sorted_by_time, 4), 2))
+    for team, swimmers in teams:
+        print('{stroke} {team}: {names}'.format(
+            stroke=stroke.capitalize(),
+            team=team,
+            names=', '.join(swimmer.name for swimmer in swimmers)
+        ))
 
 
 
